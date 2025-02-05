@@ -12,18 +12,29 @@ function App() {
   const [items, setItems] = useState(initialItems);
 
   function handleSubmit(item) {
-    setItems((x)=> x.concat(item));
+    setItems((x) => x.concat(item));
   }
-  function handleDelete(id){
-    setItems((x) => x.filter((x)=> x.id != id));
+  function handleDelete(id) {
+    setItems((x) => x.filter((x) => x.id != id));
+  }
+
+  function handlePackedToggle(id) {
+    setItems((items) =>
+      items.map((item) =>
+        item.id === id ? { ...item, packed: !item.packed } : item)
+    );
   }
 
   return (
     <div className="app">
       <Logo />
       <Form onSubmit={handleSubmit} />
-      <PackingList items={items} onDelete={handleDelete}/>
-      <Stats items={items}/>
+      <PackingList
+        items={items}
+        onDelete={handleDelete}
+        onToggle={handlePackedToggle}
+      />
+      <Stats items={items} />
     </div>
   );
 }
@@ -36,7 +47,7 @@ function Form(props) {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(1);
 
-  function handleSubmit(e){
+  function handleSubmit(e) {
     e.preventDefault();
     if (!description) return;
     props.onSubmit({ description, quantity, packed: false, id: Date.now() });
@@ -72,26 +83,35 @@ function Form(props) {
   );
 }
 
-function PackingList({items, onDelete}) {
+function PackingList({ items, onDelete, onToggle }) {
   return (
     <div className="list">
       <ul>
         {items.map((item) => (
-          <Item item={item} key={item.id} onDelete={onDelete} />
+          <Item
+            item={item}
+            key={item.id}
+            onDelete={onDelete}
+            onToggle={onToggle}
+          />
         ))}
       </ul>
     </div>
   );
 }
 
-function Item({ item, onDelete }) {
-
-  function handleClick(){
+function Item({ item, onDelete, onToggle }) {
+  function handleClick() {
     onDelete(item.id);
+  }
+
+  function handleCheck() {
+    onToggle(item.id);
   }
 
   return (
     <li>
+      <input type="checkbox" checked={item.packed} onChange={handleCheck} />
       <span style={item.packed ? { textDecoration: "line-through" } : {}}>
         {item.quantity} {item.description}
       </span>
@@ -100,14 +120,16 @@ function Item({ item, onDelete }) {
   );
 }
 
-function Stats({items}) {
-
-  const packed = items.filter((x)=>x.packed);
-  const packedPer100 = (packed.length/items.length).toPrecision(2);
+function Stats({ items }) {
+  const packed = items.filter((x) => x.packed);
+  const packedPer100 = (packed.length / items.length).toPrecision(4) * 100;
 
   return (
     <footer className="stats">
-      <em>You have {items.length} items on your list, and you already packed {packed.length} ({packedPer100}%)</em>
+      <em>
+        You have {items.length} items on your list, and you already packed{" "}
+        {packed.length} ({packedPer100}%)
+      </em>
     </footer>
   );
 }
